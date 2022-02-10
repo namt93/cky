@@ -6,12 +6,15 @@
 #include <math.h>
 #include <iomanip>
 #include <string.h>
+#include <bits/stdc++.h>
 #define SIZE 25000
 
 using namespace std;
 
 int error;
 int flat;
+long int lline;
+int des;
 
 struct Data
 {
@@ -27,11 +30,21 @@ struct Data
     int date;
 };
 
+// struct Binary
+// {
+//     string hid;
+//     string htime;
+//     string htem;
+//     string hhu;
+// };
+
+
 /* function to convert decimal to hexadecimal */
-void decToHexa(int n)
-{
+string decToHexa(int n)
+{   
     /* char array to store hexadecimal number */
-    char hexaDeciNum[100];
+    string hexaDeciNum[100];
+    string ans = "";
  
     /* counter for hexadecimal number array */
     int i = 0;
@@ -54,17 +67,22 @@ void decToHexa(int n)
  
         n = n / 16;
     }
+
+    if (i % 2 == 1) {
+        hexaDeciNum[i++] = "0";
+    }
     
     int space = 0;
     /* printing hexadecimal number array in reverse order */
     for (int j = i - 1; j >= 0; j--) {
         space++;
-        cout << hexaDeciNum[j];
+        ans += hexaDeciNum[j];
         if (space == 2) {
-            cout << " ";
+            ans += " ";
             space = 0;
         }
     }
+    return ans;
 }
 
 /* function to convert time to second */
@@ -113,59 +131,208 @@ void h_command() {
         fclose(fptr);
 };
 
+/* Function to sort the data */
 void sort(Data arr[],long int size, int n) {
     bool swapped;
     do
     {
         swapped = false;
-        for (int count = 0; count < (size - 1); count++) {
-            if (n  == 1)
-                if (arr[count].id > arr[count + 1].id) {
-                    swap(arr[count], arr[count + 1]);
-                    swapped = true; 
-                }
-            if (n == 2)
-                if (arr[count].date > arr[count + 1].date) {
-                    swap(arr[count], arr[count + 1]);
-                    swapped = true; 
-                }
-            if (n == 3)
-                if (arr[count].tem > arr[count + 1].tem) {
-                    swap(arr[count], arr[count + 1]);
-                    swapped = true; 
-                }
-            if (n == 4)
-                if (arr[count].hum > arr[count + 1].hum) {
-                    swap(arr[count], arr[count + 1]);
-                    swapped = true; 
-                }
+        if (des == 0)
+            for (int count = 0; count < (size - 1); count++) {
+                if (n  == 1)
+                    if (arr[count].id > arr[count + 1].id) {
+                        swap(arr[count], arr[count + 1]);
+                        swapped = true; 
+                    }
+                if (n == 2)
+                    if (arr[count].date > arr[count + 1].date) {
+                        swap(arr[count], arr[count + 1]);
+                        swapped = true; 
+                    }
+                if (n == 3)
+                    if (arr[count].tem > arr[count + 1].tem) {
+                        swap(arr[count], arr[count + 1]);
+                        swapped = true; 
+                    }
+                if (n == 4)
+                    if (arr[count].hum > arr[count + 1].hum) {
+                        swap(arr[count], arr[count + 1]);
+                        swapped = true; 
+                    }
             
-        }
+            }
+        if (des == 1)
+            for (int count = 0; count < (size - 1); count++) {
+                if (n  == 1)
+                    if (arr[count].id < arr[count + 1].id) {
+                        swap(arr[count], arr[count + 1]);
+                        swapped = true; 
+                    }
+                if (n == 2)
+                    if (arr[count].date < arr[count + 1].date) {
+                        swap(arr[count], arr[count + 1]);
+                        swapped = true; 
+                    }
+                if (n == 3)
+                    if (arr[count].tem < arr[count + 1].tem) {
+                        swap(arr[count], arr[count + 1]);
+                        swapped = true; 
+                    }
+                if (n == 4)
+                    if (arr[count].hum < arr[count + 1].hum) {
+                        swap(arr[count], arr[count + 1]);
+                        swapped = true; 
+                    }
+            
+            }
     } while (swapped);
     
 }
 
-long int lline;
+/* function to convert real to binary */
+string retobi(int n) {
+    string temp, res;
+    int i = 0;
+    while (n != 0) {
+        int du = n % 2;
+        if (du == 1) 
+            temp += "1";
+        else 
+            temp += "0";
+        n /= 2;
+        i++;
+    }
 
+    for (int j = i - 1; j >= 0; j--) {
+        res += temp[j]; 
+    }
+
+    return res;
+}
+
+/* function to convert fraction to binary */
+string fractobi(float n) {
+    string res;
+    int i = 0;
+    while (i < 23) {
+        n *= 2;
+        if (n < 1) {
+            res += "0";
+            i++;
+        }
+        else {
+            i++;
+            res += "1";
+            n -= 1;
+        }
+    }
+    return res;
+}
+
+/* function to convert decimal to binary (IEEE 754) */
+string detobi (float n) {
+    float frac, ptr;
+    int  real;
+    int sign = 0;
+    string res, sreal, sfrac, rres;
+    string man;
+
+    /* sign bit */
+    if (n < 0) {
+        res += "1";
+        n *= -1;
+    }
+    else
+        res += "0";
+
+    frac = modf(n, &ptr);
+    real = (int) ptr;
+
+    /* exponent */
+    sreal = retobi(real);
+    int e = sreal.length();
+    e += 126;
+    res += retobi(e);
+
+
+    /* mantissa */
+    for (int i = 1; i < e - 126; i++) {
+        res += sreal[i];
+    }
+    sfrac = fractobi(frac);
+
+    res = res + sfrac;
+    for (int i = 0; i < 32; i++) {
+        rres += res[i];
+    }
+
+    return rres;
+
+}
+
+string decToHexa1(int n)
+{   
+    /* store hexadecimal number */
+    string ans = "";
+ 
+    /* check if temp < 10 */
+    if (n < 10) {
+        ans = n + 48;
+    }
+    else {
+        ans = n + 87;
+    }
+    
+    return ans;
+}
+
+string ietohexa(string st) {
+    string res;
+    int space = 0;
+    int gr = 0, temp = 0;
+
+    for (int i = 0; i < 32; i++) {
+        if (st[i] == '1')
+            temp += 1 * pow(2, 3-gr);
+        if(gr == 3) {
+            res += decToHexa1(temp);
+            temp = 0;
+            gr = -1;
+            space ++;
+        }
+        if (space == 2) {
+            res += " ";
+            space = 0;
+        }
+        gr++;
+    }
+
+    return res;
+}
+
+/* Function to print the data to the output file */
 void printout(Data arr[], long int size, const char *outp) {
     fstream myFile;
+    string temp;
     myFile.open(outp, ios::out);
     if (myFile.is_open()) {
         myFile << "id,time,temperature,humidity" << "\n";
-        
         /* Print decrypted data to the output file. */
-        for (int count = 0; count < lline; count++) {
-            myFile << arr[count].id << "," << arr[count].year << "-";
-            myFile << arr[count].month << "-" << arr[count].day << " ";
-            myFile << arr[count].hour << ":" << arr[count].min << ":";
-            myFile << arr[count].sec << "," << arr[count].tem << ","; 
-            myFile << arr[count].hum << "\n";
+        for (int count = 0; count < size; count++) {
+            myFile << "00" << " ";
+            myFile << decToHexa(arr[count].id);
+            myFile << decToHexa(arr[count].date);
+            temp = detobi(arr[count].tem);
+            myFile << ietohexa(temp);
+            myFile << decToHexa(arr[count].hum);
+            myFile << "ff";
+            myFile << "\n";
         }
     }
     myFile.close();
 }
 
-void dtob(const char *inp, const char *outp, int n) {
+void dtob(const char *inp, const char *outp, int n, char **s) {
     ifstream myFileStream(inp);
 
     if (!myFileStream.is_open()) {
@@ -189,9 +356,14 @@ void dtob(const char *inp, const char *outp, int n) {
         getline(ss, smin, ':');
         getline(ss, ssec, ',');
         getline(ss, stem, ',');
-        getline(ss, shum, ',');
+        getline(ss, shum, '\n');
+
+        if (shum == "")
+            cout << "hihi"<<endl;
 
         if (fline == 1) {
+            cout << shum << "\n";
+
             sen[lline].id = stoi(sid);
             sen[lline].year = stoi(syear);
             sen[lline].month = stoi(smonth);
@@ -214,22 +386,9 @@ void dtob(const char *inp, const char *outp, int n) {
 
     myFileStream.close();
 
+    /* print to the output file */
     printout(sen, lline, outp);
-    // fstream myFile;
-
-    // myFile.open(outp, ios::out);
-    // if (myFile.is_open()) {
-    //     myFile << "id,time,temperature,humidity" << "\n";
-        
-    //     /* Print decrypted data to the output file. */
-    //     for (int count = 0; count < lline; count++) {
-    //         myFile << sen[count].id << "," << sen[count].year << "-";
-    //         myFile << sen[count].month << "-" << sen[count].day << " ";
-    //         myFile << sen[count].hour << ":" << sen[count].min << ":";
-    //         myFile << sen[count].sec << "," << sen[count].tem << ","; 
-    //         myFile << sen[count].hum << "\n";
-    //     }
-    // }
+    
 }
 
 void s_command(char **s, int n) {
@@ -260,9 +419,9 @@ void s_command(char **s, int n) {
                 error = 1;
         }
 
-        /* Convert Morse file to text file */
+        /* Convert csv file to txt file */
         if (ansn == 1) {
-            dtob(inp, outp, n);
+            dtob(inp, outp, n, s);
         }
     }
 }
@@ -308,6 +467,30 @@ void option_error(int n, char **s){
     }
 
     else if (n == 5 && !(strcmp(s[n - 1],"-hu")) && !(strcmp(s[n - 2],"-s"))) {
+        flat = 4;
+        s_command(s, flat);
+    }
+
+    else if (n == 6 && !(strcmp(s[n - 2],"-id")) && !(strcmp(s[n - 3],"-s")) && !(strcmp(s[n - 1],"-des"))) {
+        flat = 1;
+        des = 1;
+        s_command(s, flat);
+    }
+
+    else if (n == 6 && !(strcmp(s[n - 2],"-ti")) && !(strcmp(s[n - 3],"-s")) && !(strcmp(s[n - 1],"-des"))) {
+        des = 1;
+        flat = 2;
+        s_command(s, flat);
+    }
+
+    else if (n == 6 && !(strcmp(s[n - 2],"-te")) && !(strcmp(s[n - 3],"-s")) && !(strcmp(s[n - 1],"-des"))) {
+        flat = 3;
+        des = 1;
+        s_command(s, flat);
+    }
+
+    else if (n == 6 && !(strcmp(s[n - 2],"-hu")) && !(strcmp(s[n - 3],"-s")) && !(strcmp(s[n - 1],"-des"))) {
+        des = 1;
         flat = 4;
         s_command(s, flat);
     }
