@@ -16,6 +16,8 @@ int flat;
 long int lline;
 int des;
 
+int lineERR[SIZE];
+
 struct Data
 {
     int id;
@@ -299,6 +301,7 @@ string decToHexa1(int n)
     return ans;
 }
 
+/* From IEEE 754 to Hexa */
 string ietohexa(string st) {
     string res;
     int space = 0;
@@ -477,7 +480,11 @@ void logfile (char **s) {
         /* The initial log file of -c flag */
         myFile.open("data.log", ios::out);
         if (myFile.is_open()) {
-            myFile << "Hihi" << endl;
+            /* Print out the error in the line */
+            for (int i = 0; i < SIZE; i++) {
+                if (lineERR[i] == 1)
+                    myFile << "Error Inv: Invalid data in row " << i + 1 << endl;
+            }
         }
         myFile.close();
 
@@ -486,6 +493,54 @@ void logfile (char **s) {
         rename_log(s);
     }
 
+}
+
+/* Convert four byte array to decimal and take a sum */
+int fbyte(string s) {
+    string temp = "";
+    int gr = 0, itemp = 0, res = 0;
+    stringstream ss;
+    for (int i = 0; i < 12; i++) {
+        gr++;
+        if (gr < 3) {
+            temp += s[i];
+        }
+        if (gr == 3) {
+            ss << temp;
+            ss >> hex >> itemp;
+            res += itemp;
+            itemp = 0;
+            ss.clear();
+            temp = "";
+            gr = 0;
+        } 
+    }
+    return res;
+}
+
+string checksum(string s, string s1, int p, int id, int h) {
+    string res, rres;
+    stringstream ss;
+    int bu;
+
+    int tti = fbyte(s);
+    int tte = fbyte(s1);
+    int sum = tti + tte + p + id + h;
+    
+    ss << hex << sum;
+    res = ss.str();
+
+    for (int i = 0; i < res.length(); i++) 
+        bu += 15 * pow(16, i);
+    
+    sum = bu - sum + 2;
+    ss << hex << sum;
+    res = ss.str();
+    
+    for (int i = res.length() - 2; i < res.length(); i++)
+        rres += res[i];
+    rres += " ";
+    return rres;
 }
 
 /* Function to print the data to the output file */
@@ -503,24 +558,27 @@ void printout(Data arr[], long int size, char **s) {
         myFile << "id,time,temperature,humidity" << "\n";
         /* Print decrypted data to the output file. */
         for (int count = 0; count < size; count++) {
-            hex[count].hid = decToHexa(arr[count].id);
-            hex[count].htime = decToHexa(arr[count].date);
-            hex[count].hhu = decToHexa(arr[count].hum);
+            if (lineERR[count] != 1) {
+                hex[count].hid = decToHexa(arr[count].id);
+                hex[count].htime = decToHexa(arr[count].date);
+                hex[count].hhu = decToHexa(arr[count].hum);
             
-            temp = detobi(arr[count].tem);
-            hex[count].htem = ietohexa(temp);
-            packetl += 4;
-            hex[count].hpac = decToHexa(packetl);
-            myFile << "00" << " ";
-            myFile << hex[count].hpac;
-            myFile << hex[count].hid;
-            myFile << hex[count].htime;
-            myFile << hex[count].htem;
-            myFile << hex[count].hhu;
-            myFile << "ff";
-            myFile << "\n";
-            cout << packetl << endl;
-            packetl = 0;
+                temp = detobi(arr[count].tem);
+                hex[count].htem = ietohexa(temp);
+                packetl += 4;
+                hex[count].hpac = decToHexa(packetl);
+                myFile << "00" << " ";
+                myFile << hex[count].hpac;
+                myFile << hex[count].hid;
+                myFile << hex[count].htime;
+                myFile << hex[count].htem;
+                myFile << hex[count].hhu;
+                myFile << checksum(hex[count].htime, hex[count].htem, packetl, arr[count].id, arr[count].hum);
+                myFile << "ff";
+                myFile << "\n";
+            
+                packetl = 0;
+            }
         }
     }
     myFile.close();
@@ -528,6 +586,7 @@ void printout(Data arr[], long int size, char **s) {
     logfile(s);
 }
 
+/* Convert data file to binary file */
 void dtob(int n, char **s) {
     const char *inp, *outp;
     
@@ -559,13 +618,8 @@ void dtob(int n, char **s) {
         getline(ss, stem, ',');
         getline(ss, shum, '\n');
 
-        // cout << shum << endl;
-
-        // if (shum == "")
-        //     cout << "hihi"<<endl;
 
         if (fline == 1) {
-            // cout << shum << "\n";
 
             sen[lline].id = stoi(sid);
             sen[lline].year = stoi(syear);
@@ -576,6 +630,18 @@ void dtob(int n, char **s) {
             sen[lline].sec = stoi(ssec);
             sen[lline].tem = stof(stem);
             sen[lline].hum = stoi(shum);
+
+            if (sen[lline].id <= 0) {
+                lineERR[lline] = 1;
+                logop = 1;
+            }
+            if (sen[lline].tem < -10.0 || sen[lline].tem > 51.0) {
+                lineERR[lline] = 1;
+                logop = 1;
+            }
+            if (sen[lline].hum < 40 || sen[lline].hum > 95)
+                lineERR[lline] = 1;
+
 
             lline++;
         }
