@@ -30,14 +30,45 @@ struct Data
     int date;
 };
 
-// struct Binary
-// {
-//     string hid;
-//     string htime;
-//     string htem;
-//     string hhu;
-// };
+struct Binary
+{
+    string hpac;
+    string hid;
+    string htime;
+    string htem;
+    string hhu;
+};
 
+int logop;
+
+int packetl;
+
+/* Local variables store date and time values 
+as a number */
+int nyear, nmonth, nday, 
+nhours, nminutes, nseconds;
+
+/* Local variables store the name of 
+input and output file without extension */
+char new_inp[50], new_outp[50];
+
+/* Perform -h command */
+void h_command() {
+    FILE *fptr;
+    char c;
+
+    /* Open readme file for reading */
+    fptr = fopen("readme.txt", "r");
+    c = fgetc(fptr);
+    
+    /* Print the content from readme.txt file */
+    while (c != EOF) {
+            printf ("%c", c); 
+            c = fgetc(fptr);
+        };
+  
+        fclose(fptr);
+};
 
 /* function to convert decimal to hexadecimal */
 string decToHexa(int n)
@@ -78,6 +109,7 @@ string decToHexa(int n)
         space++;
         ans += hexaDeciNum[j];
         if (space == 2) {
+            packetl ++;
             ans += " ";
             space = 0;
         }
@@ -88,7 +120,6 @@ string decToHexa(int n)
 /* function to convert time to second */
 void ttosec(Data arr[],long int size) 
 {   
-    int date;
     time_t rawtime;
     struct tm * timeinfo;
 
@@ -112,24 +143,6 @@ void ttosec(Data arr[],long int size)
         arr[i].date = mktime(timeinfo);
     }
 }
-
-/* Perform -h command */
-void h_command() {
-    FILE *fptr;
-    char c;
-
-    /* Open readme file for reading */
-    fptr = fopen("readme.txt", "r");
-    c = fgetc(fptr);
-    
-    /* Print the content from readme.txt file */
-    while (c != EOF) {
-            printf ("%c", c); 
-            c = fgetc(fptr);
-        };
-  
-        fclose(fptr);
-};
 
 /* Function to sort the data */
 void sort(Data arr[],long int size, int n) {
@@ -301,6 +314,7 @@ string ietohexa(string st) {
             space ++;
         }
         if (space == 2) {
+            packetl++;
             res += " ";
             space = 0;
         }
@@ -310,29 +324,216 @@ string ietohexa(string st) {
     return res;
 }
 
+/* print out date and time */
+char cmonth[6];
+void current_time(){
+    /* time_t is arithmetic time type */
+    time_t now;
+
+    /* time() returns the current time of
+    the system as a time_t value */
+    time(&now);
+
+    /* Localtime converts a time_t value to calendar time */
+    struct tm *local = localtime(&now);
+
+    nhours = local->tm_hour;             /* Get hours (0 - 23)   */
+    nminutes = local->tm_min;            /* Get minutes (0 - 59) */
+    nseconds = local->tm_sec;            /* Get seconds (0 - 59) */
+
+    nday = local->tm_mday;               /* Get day (1 to 31)    */
+    nmonth = local -> tm_mon + 1;        /* Get month (0 to 11)  */
+    nyear = local -> tm_year + 1900;     /* Get year since 1900  */
+
+    /* Convert month 
+    from number to word */ 
+    switch (nmonth)
+    {
+    case 1:
+        strcpy(cmonth,"Jan");
+        break;
+    case 2:
+        strcpy(cmonth,"Feb");
+        break;
+    case 3:
+        strcpy(cmonth,"Mar");
+        break;
+    case 4:
+        strcpy(cmonth,"Apr");
+        break;
+    case 5:
+        strcpy(cmonth,"May");
+        break;
+    case 6:
+        strcpy(cmonth,"Jun");
+        break;
+    case 7:
+        strcpy(cmonth,"Jul");
+        break;
+    case 8:
+        strcpy(cmonth,"Aug");
+        break;
+    case 9:
+        strcpy(cmonth,"Sep");
+        break;
+    case 10:
+        strcpy(cmonth,"Oct");
+        break;
+    case 11:
+        strcpy(cmonth,"Nov");
+        break;
+    case 12:
+        strcpy(cmonth,"Dec");
+        break;
+    default:
+        break;
+    }
+}
+
+/* Remove file extension of
+input and output */
+void rm_extension(char *s, char *s1){
+    int i, j = 0;
+    char extension[2] = ".";
+    int siz = strlen(s);
+    int siz1 = strlen(s1);
+    
+    /* Return new_inp as
+    the input file name without file extension */
+    for (int i = 0; i < siz; i++) {
+        if (strstr(&s[i],extension) == &s[i])
+            break;
+        else
+            new_inp[j++] = s[i];
+        
+    }
+    new_inp[j] = '\0';
+    j = 0;
+    
+    /* Return new_outp as the name of
+    the output file without file extension */
+    for (int i = 0; i < siz1; i++) {
+        if(strstr(&s1[i],extension) == &s1[i])
+            break;
+        else
+            new_outp[j++] = s1[i];
+        
+    }
+}
+
+/* Rename log file of -c flag */
+void rename_log(char **s){
+    
+    char old_name[] = "data.log";
+    
+    /* Variables store values in the char type */
+    char cyear[10], cmonth[10], cday[10], 
+    chours[10], cminutes[10], cseconds[10];
+
+    /* Convert int to char */
+    itoa(nyear, cyear, 10);
+    itoa(nmonth, cmonth, 10);
+    itoa(nday, cday, 10);
+    itoa(nhours, chours, 10);
+    itoa(nminutes, cminutes, 10);
+    itoa(nseconds, cseconds, 10);
+
+    /* Remove extension of 
+    the input and output name */
+    rm_extension(s[1], s[2]);
+
+    /* Combine components of 
+    the log file name */
+    strcat(new_inp, "_");
+    strcat(new_inp, new_outp);
+    strcat(new_inp, "_");
+    strcat(new_inp, cyear);
+    if (nmonth < 10)
+        strcat(new_inp, "0");
+    strcat(new_inp, cmonth);
+    if (nday < 10)
+        strcat(new_inp, "0");
+    strcat(new_inp, cday);
+    strcat(new_inp, "_");
+    if (nhours < 10)
+        strcat(new_inp, "0");
+    strcat(new_inp, chours);
+    if (nminutes < 10)
+        strcat(new_inp, "0");
+    strcat(new_inp, cminutes);
+    if (nseconds < 10)
+        strcat(new_inp, "0");
+    strcat(new_inp, cseconds);
+    strcat(new_inp, ".log");
+
+    /* Change the log file name */
+    rename(old_name, new_inp);
+}
+
+void logfile (char **s) {
+    if (logop == 1) {
+        fstream myFile;
+    
+        /* The initial log file of -c flag */
+        myFile.open("data.log", ios::out);
+        if (myFile.is_open()) {
+            myFile << "Hihi" << endl;
+        }
+        myFile.close();
+
+        current_time();
+        /* Rename data.log file */
+        rename_log(s);
+    }
+
+}
+
 /* Function to print the data to the output file */
-void printout(Data arr[], long int size, const char *outp) {
+void printout(Data arr[], long int size, char **s) {
+    const char *outp;
+    
     fstream myFile;
     string temp;
+
+    Binary hex[size];
+
+    outp = s[2];
     myFile.open(outp, ios::out);
     if (myFile.is_open()) {
         myFile << "id,time,temperature,humidity" << "\n";
         /* Print decrypted data to the output file. */
         for (int count = 0; count < size; count++) {
-            myFile << "00" << " ";
-            myFile << decToHexa(arr[count].id);
-            myFile << decToHexa(arr[count].date);
+            hex[count].hid = decToHexa(arr[count].id);
+            hex[count].htime = decToHexa(arr[count].date);
+            hex[count].hhu = decToHexa(arr[count].hum);
+            
             temp = detobi(arr[count].tem);
-            myFile << ietohexa(temp);
-            myFile << decToHexa(arr[count].hum);
+            hex[count].htem = ietohexa(temp);
+            packetl += 4;
+            hex[count].hpac = decToHexa(packetl);
+            myFile << "00" << " ";
+            myFile << hex[count].hpac;
+            myFile << hex[count].hid;
+            myFile << hex[count].htime;
+            myFile << hex[count].htem;
+            myFile << hex[count].hhu;
             myFile << "ff";
             myFile << "\n";
+            cout << packetl << endl;
+            packetl = 0;
         }
     }
     myFile.close();
+
+    logfile(s);
 }
 
-void dtob(const char *inp, const char *outp, int n, char **s) {
+void dtob(int n, char **s) {
+    const char *inp, *outp;
+    
+    inp = s[1]; 
+    outp = s[2];
+
     ifstream myFileStream(inp);
 
     if (!myFileStream.is_open()) {
@@ -358,11 +559,13 @@ void dtob(const char *inp, const char *outp, int n, char **s) {
         getline(ss, stem, ',');
         getline(ss, shum, '\n');
 
-        if (shum == "")
-            cout << "hihi"<<endl;
+        // cout << shum << endl;
+
+        // if (shum == "")
+        //     cout << "hihi"<<endl;
 
         if (fline == 1) {
-            cout << shum << "\n";
+            // cout << shum << "\n";
 
             sen[lline].id = stoi(sid);
             sen[lline].year = stoi(syear);
@@ -387,10 +590,11 @@ void dtob(const char *inp, const char *outp, int n, char **s) {
     myFileStream.close();
 
     /* print to the output file */
-    printout(sen, lline, outp);
+    printout(sen, lline, s);
     
 }
 
+/* function to perform s_command */
 void s_command(char **s, int n) {
     const char *inp, *outp;
     
@@ -421,11 +625,10 @@ void s_command(char **s, int n) {
 
         /* Convert csv file to txt file */
         if (ansn == 1) {
-            dtob(inp, outp, n, s);
+            dtob(n, s);
         }
     }
 }
-
 
 void option_error(int n, char **s){
     
